@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Agenda de Reservas</title>
+  <style>
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        padding-top: 60px; /* altura do header */
+    }
+
+    header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background: #2c3e50;
+        color: white;
+        padding: 10px;
+        text-align: center;
+        z-index: 1000;
+    }
+
+    .container { display: flex; }
+    .sidebar {
+      width: 200px; 
+      background: #34495e; color: white; height: 100vh; padding-top: 20px;
+    }
+    .sidebar button {
+      display: block; width: 100%; padding: 10px; background: none; border: none; color: white;
+      text-align: left; cursor: pointer;
+    }
+    .sidebar button:hover { background: #2c3e50; }
+    .main { flex: 1; padding: 20px; }
+    label, select, input, button { display: block; margin: 10px 0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #f4f4f4; position: sticky; top: 0; }
+    #search { float: right; margin-bottom: 10px; }
+    .modal {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); justify-content: center; align-items: center;
+    }
+    .modal-content {
+      background: white; padding: 20px; border-radius: 5px; text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<header><h1>Agenda de Reservas</h1></header>
+
+<div class="container">
+  <div class="sidebar">
+    <button onclick="navigate('reserva')">Reserva</button>
+    <button onclick="navigate('agenda')">Agenda</button>
+  </div>
+
+  <div class="main" id="main-content">
+    <label>Funcionário:
+      <select id="funcionario">
+        <option value="">Selecione</option>
+        <!-- ${[...Array(20)].map((_, i) => `<option value="Funcionario ${i+1}">Funcionario ${i+1}</option>`).join('')} -->
+         <option value="Henrique">Henrique</option>
+         <option value="Paulo">Paulo</option>
+      </select>
+    </label>
+
+    <label>Data:
+      <input type="date" id="data" onchange="verificarFeriado()">
+    </label>
+
+    <label>Tipo de Reserva:
+      <select id="tipo">
+        <option value="Férias">Férias</option>
+        <option value="Folga">Folga</option>
+        <option value="Feriado">Feriado</option>
+      </select>
+    </label>
+
+    <button onclick="salvar()">Salvar</button>
+    <button onclick="alterar()">Alterar</button>
+
+    <input type="text" id="search" placeholder="🔍 Buscar..." oninput="filtrar()">
+
+    <table id="tabela">
+      <thead>
+        <tr>
+          <th>Funcionário</th>
+          <th>Data</th>
+          <th>Tipo</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <p>⚠️ Limite de ausência atingido para esta data!</p>
+    <button onclick="fecharModal()">Fechar</button>
+  </div>
+</div>
+
+<script>
+  const feriados = ["2025-01-01", "2025-04-21", "2025-05-01", "2025-09-07", "2025-10-12", "2025-11-02", "2025-11-15", "2025-12-25"];
+  const reservas = [];
+
+  function navigate(pagina) {
+    alert(`Navegando para: ${pagina}`);
+  }
+
+  function verificarFeriado() {
+    const data = document.getElementById("data").value;
+    if (feriados.includes(data)) {
+      alert("📅 Esta data é feriado!");
+    }
+  }
+
+  function salvar() {
+    const funcionario = document.getElementById("funcionario").value;
+    const data = document.getElementById("data").value;
+    const tipo = document.getElementById("tipo").value;
+
+    if (!funcionario || !data || !tipo) return alert("Preencha todos os campos!");
+
+    const ausentes = reservas.filter(r => r.data === data).length;
+    if (ausentes >= 8) {
+      document.getElementById("modal").style.display = "flex";
+      return;
+    }
+
+    reservas.push({ funcionario, data, tipo });
+    atualizarTabela();
+  }
+
+  function alterar() {
+    const funcionario = document.getElementById("funcionario").value;
+    const data = document.getElementById("data").value;
+    const tipo = document.getElementById("tipo").value;
+
+    const index = reservas.findIndex(r => r.funcionario === funcionario && r.data === data);
+    if (index >= 0) {
+      reservas[index].tipo = tipo;
+      atualizarTabela();
+    } else {
+      alert("Reserva não encontrada para alteração.");
+    }
+  }
+
+  function atualizarTabela() {
+    const tbody = document.querySelector("#tabela tbody");
+    tbody.innerHTML = reservas.map(r => `<tr><td>${r.funcionario}</td><td>${r.data}</td><td>${r.tipo}</td></tr>`).join('');
+  }
+
+  function filtrar() {
+    const termo = document.getElementById("search").value.toLowerCase();
+    const tbody = document.querySelector("#tabela tbody");
+    tbody.innerHTML = reservas
+      .filter(r => r.funcionario.toLowerCase().includes(termo) || r.data.includes(termo) || r.tipo.toLowerCase().includes(termo))
+      .map(r => `<tr><td>${r.funcionario}</td><td>${r.data}</td><td>${r.tipo}</td></tr>`).join('');
+  }
+
+  function fecharModal() {
+    document.getElementById("modal").style.display = "none";
+  }
+</script>
+
+</body>
+</html>
